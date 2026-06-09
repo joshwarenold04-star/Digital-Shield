@@ -1,0 +1,92 @@
+{% extends "operator_base.html" %}
+
+{% block title %}User Directory – Operator Console{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page">
+  <div class="mb-3">
+    <h2 class="page-title">Registered User Directory</h2>
+    <p class="page-subtitle">View profiles, check medical groups, and promote accounts to emergency operator roles.</p>
+  </div>
+
+  <!-- Users Roster Card -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <span>👥 Platform User Roster</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Mobile</th>
+              <th>Blood Group</th>
+              <th>Role</th>
+              <th>Registered At</th>
+              <th>Console Privileges</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+              <tr>
+                <td>{{ u.id }}</td>
+                <td style="font-weight: 600;">{{ u.full_name }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.mobile }}</td>
+                <td>
+                  {% if u.blood_group %}
+                    <span class="badge badge-yellow">{{ u.blood_group }}</span>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if u.is_admin %}
+                    <span class="badge badge-red">Operator/Admin</span>
+                  {% else %}
+                    <span class="badge badge-blue">User</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.8rem;">{{ u.created_at }}</td>
+                <td>
+                  {% if not u.is_admin %}
+                    <button class="btn btn-outline btn-sm" onclick="promoteUser({{ u.id }})" style="padding: 0.25rem 0.6rem; font-size: 0.75rem; border-color: var(--sos-red); color: #ff6e7a;">
+                      Promote to Operator
+                    </button>
+                  {% else %}
+                    <span class="text-muted" style="font-size: 0.8rem;">Authorized Console</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function promoteUser(userId) {
+  if (!confirm('Promote this user to emergency console operator?')) return;
+  
+  try {
+    const res = await fetch(`/api/admin/make_admin/${userId}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      showToast('User promoted to Console Operator role.', 'success');
+      setTimeout(() => window.location.reload(), 1200);
+    } else {
+      showToast('Promotion request failed.', 'danger');
+    }
+  } catch(err) {
+    showToast('Network error promoting user.', 'danger');
+  }
+}
+</script>
+{% endblock %}

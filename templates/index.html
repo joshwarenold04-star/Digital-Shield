@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block title %}Digital Shield – Smart Safety System for Women & Pregnant Ladies{% endblock %}
+
+{% block content %}
+<!-- ── Hero Section ───────────────────────────────────────────────────────── -->
+<section class="hero">
+  <!-- Glowing Background Orbs -->
+  <div class="hero-orb hero-orb-1"></div>
+  <div class="hero-orb hero-orb-2"></div>
+  <div class="hero-orb hero-orb-3"></div>
+
+  <div class="container d-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); align-items: center; gap: 3rem;">
+    <!-- Content Area -->
+    <div class="hero-content">
+      <div class="hero-badge">
+        <span>🛡️ Academic prototype v1.0</span>
+      </div>
+      <h1 class="hero-title">
+        Real-Time Safety <br>
+        <span class="gradient-text">Digital Shield</span>
+      </h1>
+      <p class="hero-desc">
+        A smart emergency safety platform providing instant alerts, live GPS location tracking, and critical medical dispatch for women and pregnant ladies.
+      </p>
+      
+      <div class="hero-buttons">
+        {% if session.get('user_id') %}
+          <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+        {% else %}
+          <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg">Get Started</a>
+          <a href="{{ url_for('login') }}" class="btn btn-outline btn-lg">Login Access</a>
+        {% endif %}
+        <a href="{{ url_for('lockscreen') }}" class="btn btn-outline btn-lg" style="border-color: var(--sos-red); color: var(--sos-red);">Lock Screen Demo</a>
+      </div>
+    </div>
+
+    <!-- 3D Float Visual Area -->
+    <div class="hero-visual">
+      <div class="shield-3d">
+        <div class="shield-ring"></div>
+        <div class="shield-ring"></div>
+        <div class="shield-ring"></div>
+        <div class="shield-main">
+          🛡️
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features Section ────────────────────────────────────────────────────── -->
+<section class="container">
+  <div class="section-heading">
+    <span>Key System Features</span>
+  </div>
+
+  <div class="features-grid">
+    <!-- Feature 1: Women SOS -->
+    <div class="feature-card">
+      <div class="feature-icon red">🔴</div>
+      <h3>Women Emergency SOS</h3>
+      <p>Instant red trigger alert capturing GPS location, sending direct emergency reports to Parents, Friends, and Police.</p>
+    </div>
+
+    <!-- Feature 2: Pregnancy SOS -->
+    <div class="feature-card">
+      <div class="feature-icon green">🟢</div>
+      <h3>Pregnancy Emergency SOS</h3>
+      <p>One-tap green button for pregnant ladies requiring immediate medical assistance. Triggers ambulance routing, doctor pager, and hospital notifications.</p>
+    </div>
+
+    <!-- Feature 3: GPS Geolocation -->
+    <div class="feature-card">
+      <div class="feature-icon blue">📍</div>
+      <h3>Live Location Tracking</h3>
+      <p>Tracks current coordinates with real-time feedback using browser GPS mapping and street-level reverse geocoding lookups.</p>
+    </div>
+
+    <!-- Feature 4: Simulation lock screen -->
+    <div class="feature-card">
+      <div class="feature-icon purple">📱</div>
+      <h3>Lock Screen Simulation</h3>
+      <p>Simulates power option menus and background emergency responses via power button long-press event listener controls.</p>
+    </div>
+  </div>
+</section>
+{% endblock %}

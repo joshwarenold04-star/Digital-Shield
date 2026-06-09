@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulated Lock Screen – Digital Shield</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff1744'><path d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z'/></svg>">
+</head>
+<body class="lockscreen-page">
+
+  <!-- Back to Dashboard Link -->
+  <a href="{{ url_for('dashboard') }}" class="btn btn-outline btn-sm" style="position: absolute; top: 1.5rem; left: 1.5rem; border-color: rgba(255,255,255,0.2); color: var(--text-primary); z-index: 10;">
+    ⬅️ Exit Simulation
+  </a>
+
+  <!-- Lockscreen Time & Date -->
+  <div class="ls-time">
+    <div class="ls-clock" id="ls-clock">12:00</div>
+    <div class="ls-date" id="ls-date">Tuesday, June 9</div>
+  </div>
+
+  <!-- Swipe Instruction / Hints -->
+  <div class="ls-middle">
+    <div class="swipe-icon">🔒</div>
+    <div style="font-weight: 500; letter-spacing: 0.05em;">SECURED SIMULATION</div>
+    <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; margin-top: 0.25rem;">
+      Press & Hold <b style="color: var(--blue-accent);">Power Button</b> for quick options
+    </div>
+  </div>
+
+  <!-- Main Lockscreen Action Panel -->
+  <div class="ls-actions">
+    <!-- Bottom SOS triggers row -->
+    <div class="ls-sos-row">
+      <button class="ls-btn sos-women-btn" id="ls-women-btn" title="Tap to trigger SOS Women">
+        <span class="ls-btn-icon">🔴</span>
+        <span>SOS Women</span>
+      </button>
+      <button class="ls-btn sos-preg-btn" id="ls-preg-btn" title="Tap to trigger SOS Pregnancy">
+        <span class="ls-btn-icon">🟢</span>
+        <span>SOS Medical</span>
+      </button>
+    </div>
+
+    <!-- Power / Restart controls row -->
+    <div class="ls-sos-row">
+      <button class="ls-btn power-btn" id="ls-power-btn" title="Press and Hold (Long Press) to open power menu">
+        <span class="ls-btn-icon">⚡</span>
+        <span style="font-size: 0.8rem;">Hold Power</span>
+      </button>
+      <button class="ls-btn restart-btn" id="ls-restart-btn" title="Restart simulation page">
+        <span class="ls-btn-icon">🔄</span>
+        <span style="font-size: 0.8rem;">Restart</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Android-Style Quick Emergency Popup Menu ───────────────────────────── -->
+  <div class="power-menu" id="power-menu">
+    <div class="power-menu-content">
+      <div class="power-menu-title">Emergency Panel & Options</div>
+      
+      <div class="power-menu-items">
+        <!-- Option 1: Red SOS button -->
+        <button class="power-menu-item danger" id="pm-women-sos">
+          <span class="pmi-icon text-red">🔴</span>
+          <div class="pmi-text">
+            <div class="pmi-label">SOS Women Emergency</div>
+            <div class="pmi-sub">Broadcast safety alarm & notify caretakers</div>
+          </div>
+        </button>
+
+        <!-- Option 2: Green SOS button -->
+        <button class="power-menu-item safe" id="pm-preg-sos">
+          <span class="pmi-icon text-green">🟢</span>
+          <div class="pmi-text">
+            <div class="pmi-label">Pregnancy Assistance</div>
+            <div class="pmi-sub">Dispatch urgent medical help & ambulance</div>
+          </div>
+        </button>
+
+        <!-- Option 3: Power Off -->
+        <button class="power-menu-item" id="pm-power-off">
+          <span class="pmi-icon">⚡</span>
+          <div class="pmi-text">
+            <div class="pmi-label">Power Off</div>
+            <div class="pmi-sub">Deactivate prototype screen simulation</div>
+          </div>
+        </button>
+
+        <!-- Option 4: Restart -->
+        <button class="power-menu-item" id="pm-restart">
+          <span class="pmi-icon">🔄</span>
+          <div class="pmi-text">
+            <div class="pmi-label">Restart System</div>
+            <div class="pmi-sub">Reset and reload lock screen interface</div>
+          </div>
+        </button>
+      </div>
+
+      <button class="btn btn-outline btn-block mt-3" id="power-menu-cancel" style="border-radius: var(--radius-lg);">
+        Dismiss Menu
+      </button>
+    </div>
+  </div>
+
+  <!-- Include Geolocation & lockscreen handling scripts -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/location.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/lockscreen.js') }}"></script>
+</body>
+</html>

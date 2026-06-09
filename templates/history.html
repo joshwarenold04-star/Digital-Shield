@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}Alert History – Digital Shield{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page">
+  <div class="mb-3">
+    <h2 class="page-title">SOS Dispatch Records</h2>
+    <p class="page-subtitle">Historical records of safety alerts triggered by this user.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span>🕒 Alert Log</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      {% if alerts %}
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Alert Type</th>
+                <th>Status</th>
+                <th>GPS Coordinates</th>
+                <th>Location Address</th>
+                <th>Dispatch Time</th>
+                <th>Map Lookup</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for alert in alerts %}
+                <tr>
+                  <td>
+                    {% if alert.type == 'women' %}
+                      <span class="badge badge-red">🔴 Women SOS</span>
+                    {% else %}
+                      <span class="badge badge-green">🟢 Pregnancy</span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <span class="badge badge-blue">{{ alert.status }}</span>
+                  </td>
+                  <td style="font-family: monospace;">
+                    {{ alert.latitude }}, {{ alert.longitude }}
+                  </td>
+                  <td>
+                    {{ alert.address }}
+                  </td>
+                  <td>
+                    {{ alert.created_at }}
+                  </td>
+                  <td>
+                    {% if alert.latitude and alert.longitude %}
+                      <a href="https://www.google.com/maps/search/?api=1&query={{ alert.latitude }},{{ alert.longitude }}" 
+                         target="_blank" 
+                         class="btn btn-outline btn-sm" 
+                         style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                        🗺️ Map
+                      </a>
+                    {% else %}
+                      <span class="text-muted">—</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 4rem; text-align: center;" class="text-muted">
+          No incident alerts logged yet.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

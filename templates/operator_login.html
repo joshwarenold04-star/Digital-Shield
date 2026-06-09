@@ -1,0 +1,35 @@
+{% extends "operator_base.html" %}
+
+{% block title %}Operator Console Login – Digital Shield{% endblock %}
+
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card" style="border-color: var(--sos-red-glow);">
+    <div class="auth-logo">
+      <div class="shield-icon" style="background: linear-gradient(135deg, var(--sos-red), var(--sos-red-dark)); box-shadow: 0 8px 30px var(--sos-red-glow);">🚨</div>
+      <h2>Digital Shield Console</h2>
+    </div>
+
+    <h3 class="auth-title">Dispatcher Authentication</h3>
+    <p class="auth-sub">Authorized emergency operator access only</p>
+
+    <form action="{{ url_for('login') }}" method="POST">
+      <div class="form-group">
+        <label for="email" class="form-label">Email Address</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="operator@safety.gov" required autocomplete="email" style="border-color: rgba(255,23,68,0.2);">
+      </div>
+
+      <div class="form-group">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="current-password" style="border-color: rgba(255,23,68,0.2);">
+      </div>
+
+      <button type="submit" class="btn btn-block mt-3" style="background: linear-gradient(135deg, var(--sos-red), var(--sos-red-dark)); color: #fff; box-shadow: 0 4px 20px var(--sos-red-glow);">Authorized Access</button>
+    </form>
+    
+    <div class="text-center mt-3" style="font-size: 0.8rem; color: var(--text-muted);">
+      <p>⚠️ All console operations are monitored and recorded under standard compliance.</p>
+    </div>
+  </div>
+</div>
+{% endblock %}

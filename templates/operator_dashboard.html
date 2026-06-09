@@ -1,0 +1,307 @@
+{% extends "operator_base.html" %}
+
+{% block title %}Emergency Dispatch Dashboard – Digital Shield{% endblock %}
+
+{% block extra_head %}
+<style>
+  .dispatch-grid {
+    display: grid;
+    grid-template-columns: 360px 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    align-items: start;
+  }
+  @media (max-width: 992px) {
+    .dispatch-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  /* Feed Column */
+  .incident-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+    padding-right: 0.5rem;
+  }
+  
+  .incident-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 1.25rem;
+    cursor: pointer;
+    transition: all var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+  .incident-card:hover {
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+    border-color: var(--blue-accent);
+  }
+  .incident-card.active-card {
+    border-color: var(--sos-red);
+    box-shadow: 0 4px 20px var(--sos-red-glow);
+  }
+  .incident-card.selected {
+    border-color: var(--blue-accent);
+    background: rgba(33, 150, 243, 0.08);
+  }
+  
+  /* Flashing indicator for active unhandled alerts */
+  .incident-card.pulse-red {
+    animation: pulseBorderRed 2s infinite;
+  }
+  .incident-card.pulse-green {
+    animation: pulseBorderGreen 2s infinite;
+  }
+  @keyframes pulseBorderRed {
+    0%, 100% { border-color: var(--border-color); }
+    50% { border-color: var(--sos-red); box-shadow: 0 0 12px var(--sos-red-glow); }
+  }
+  @keyframes pulseBorderGreen {
+    0%, 100% { border-color: var(--border-color); }
+    50% { border-color: var(--sos-green); box-shadow: 0 0 12px var(--sos-green-glow); }
+  }
+
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .victim-name {
+    font-weight: 700;
+    font-size: 1rem;
+  }
+  .incident-address {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  /* Details Panel */
+  .details-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 2rem;
+    backdrop-filter: blur(15px);
+  }
+  
+  .details-map {
+    height: 320px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1.5rem;
+    background: #000;
+  }
+  .details-map iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+  }
+  
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .details-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .contacts-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-top: 0.5rem;
+  }
+  
+  .contact-item {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  
+  .status-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    margin-top: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page">
+  <!-- Top bar / Stats -->
+  <div class="d-flex justify-between align-center flex-wrap mb-3">
+    <div>
+      <h2 class="page-title">Digital Shield Dispatch Center</h2>
+      <p class="page-subtitle">Platform status, incoming dispatches, and emergency routing protocols.</p>
+    </div>
+    <div>
+      <span class="badge badge-red" id="active-incident-badge" style="display: none; animation: blink 2s infinite;">🔴 Live Emergencies</span>
+    </div>
+  </div>
+
+  <!-- Platform Stats Bar -->
+  <div class="admin-stats" style="margin-bottom: 1.5rem;">
+    <div class="admin-stat">
+      <div class="admin-stat-icon blue">👥</div>
+      <div class="admin-stat-info">
+        <div class="stat-n" id="stat-users">{{ stats.total_users }}</div>
+        <div class="stat-l">Total Users</div>
+      </div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-icon red">🚨</div>
+      <div class="admin-stat-info">
+        <div class="stat-n" id="stat-women">{{ stats.total_women_alerts }}</div>
+        <div class="stat-l">Women SOS</div>
+      </div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-icon green">🏥</div>
+      <div class="admin-stat-info">
+        <div class="stat-n" id="stat-preg">{{ stats.total_pregnancy_alerts }}</div>
+        <div class="stat-l">Pregnancy SOS</div>
+      </div>
+    </div>
+    <div class="admin-stat">
+      <div class="admin-stat-icon yellow">📞</div>
+      <div class="admin-stat-info">
+        <div class="stat-n" id="stat-contacts">{{ stats.total_contacts }}</div>
+        <div class="stat-l">Emergency Contacts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Grid Layout -->
+  <div class="dispatch-grid">
+    <!-- Left Incident List -->
+    <div>
+      <div class="section-heading">
+        <span>Incident Dispatch Feed</span>
+      </div>
+      <div class="incident-feed" id="incident-feed">
+        <!-- Loaded dynamically via javascript polling -->
+        <p class="text-center text-muted" style="padding: 3rem;">Loading incident dispatches...</p>
+      </div>
+    </div>
+
+    <!-- Center/Right Details Panel -->
+    <div>
+      <div class="section-heading">
+        <span>Incident details console</span>
+      </div>
+      
+      <div class="details-panel" id="empty-details-view">
+        <div style="text-align: center; padding: 5rem 0;" class="text-muted">
+          <span style="font-size: 3rem;">🛡️</span>
+          <h3 class="mt-2">No Incident Selected</h3>
+          <p class="mt-1">Select an active or historical alert from the dispatch feed to inspect details, victim profile, and coordinate assistance.</p>
+        </div>
+      </div>
+
+      <div class="details-panel" id="incident-details-view" style="display: none;">
+        <!-- Incident coordinates map -->
+        <div class="details-map">
+          <iframe id="incident-map" src="" allowfullscreen></iframe>
+        </div>
+
+        <div class="d-flex justify-between align-center mb-4 flex-wrap gap-2">
+          <div>
+            <h3 id="detail-type" class="text-red">Women SOS Alert</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);" id="detail-time">Reported 2 mins ago (2026-06-09 12:00)</p>
+          </div>
+          <div>
+            <span class="badge" id="detail-status-badge">SENT</span>
+          </div>
+        </div>
+
+        <!-- Victim and Emergency contacts details -->
+        <div class="details-grid">
+          <!-- Victim Card -->
+          <div class="card" style="background: rgba(255,255,255,0.01);">
+            <div class="card-header">👥 Victim Profile</div>
+            <div class="card-body">
+              <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.9rem;">
+                <div>
+                  <span class="text-muted" style="font-size: 0.75rem; display: block; text-transform: uppercase;">Full Name</span>
+                  <span id="detail-name" style="font-weight: 600; font-size: 1rem;">Jane Doe</span>
+                </div>
+                <div>
+                  <span class="text-muted" style="font-size: 0.75rem; display: block; text-transform: uppercase;">Mobile Number</span>
+                  <a id="detail-phone-link" href="" class="text-blue" style="font-weight: 600; font-size: 1rem;">9876543210</a>
+                </div>
+                <div>
+                  <span class="text-muted" style="font-size: 0.75rem; display: block; text-transform: uppercase;">Blood Group</span>
+                  <span class="badge badge-yellow" id="detail-blood">A+</span>
+                </div>
+                <div>
+                  <span class="text-muted" style="font-size: 0.75rem; display: block; text-transform: uppercase;">Registered Home Address</span>
+                  <span id="detail-home-address" style="color: var(--text-secondary);">123 Main Street, City</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Emergency Contacts Card -->
+          <div class="card" style="background: rgba(255,255,255,0.01);">
+            <div class="card-header">📞 Notified Contacts</div>
+            <div class="card-body">
+              <p class="text-muted" style="font-size: 0.8rem; margin-bottom: 0.5rem;">The following user contacts were pinged on dispatch:</p>
+              <div class="contacts-grid" id="detail-contacts-list">
+                <!-- Dynamically populated contacts -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card mt-4" style="background: rgba(255,255,255,0.01); border-color: rgba(255,23,68,0.2);">
+          <div class="card-header">🚨 Dispatch Action Center</div>
+          <div class="card-body">
+            <div style="font-size: 0.9rem;">
+              <p><strong>Captured SOS Address:</strong> <span id="detail-sos-address" style="color: var(--text-secondary);">Analyzing coordinates...</span></p>
+              <p class="mt-1"><strong>GPS Location Coordinates:</strong> <code id="detail-coords">0.0, 0.0</code></p>
+            </div>
+            
+            <div class="status-form">
+              <label for="dispatch-status-select" class="form-label" style="margin-bottom: 0; white-space: nowrap;">Change Alert Status:</label>
+              <select id="dispatch-status-select" class="form-control" style="width: auto; flex: 1;">
+                <option value="sent">🚨 Sent (Pending Action)</option>
+                <option value="responding">⚠️ Responding (In Touch)</option>
+                <option value="dispatched">🚓 Dispatched (Help En Route)</option>
+                <option value="resolved">✅ Resolved (Safety Confirmed)</option>
+                <option value="false_alarm">🔇 False Alarm</option>
+              </select>
+              <button class="btn btn-primary" onclick="updateIncidentStatus()">Update</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Connect Operator Console Logic -->
+<script src="{{ url_for('static', filename='js/operator_console.js') }}"></script>
+{% endblock %}

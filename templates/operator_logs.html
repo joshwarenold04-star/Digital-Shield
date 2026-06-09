@@ -1,0 +1,49 @@
+{% extends "operator_base.html" %}
+
+{% block title %}System Audit Logs – Operator Console{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page">
+  <div class="mb-3">
+    <h2 class="page-title">Console Audit trail</h2>
+    <p class="page-subtitle">Security audit logs for platform events, dispatch operations, and registrations.</p>
+  </div>
+
+  <!-- Audit Logs Card -->
+  <div class="card">
+    <div class="card-header">
+      <span>📋 System Audit Logs</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>Triggered By</th>
+              <th>Action Event</th>
+              <th>Details</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+              <tr>
+                <td>#{{ log.id }}</td>
+                <td style="font-weight: 600;">
+                  {{ log.full_name or 'System/Anonymous' }}
+                </td>
+                <td>
+                  <span class="badge badge-yellow">{{ log.action }}</span>
+                </td>
+                <td>{{ log.details or '—' }}</td>
+                <td style="font-size: 0.8rem;">{{ log.created_at }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

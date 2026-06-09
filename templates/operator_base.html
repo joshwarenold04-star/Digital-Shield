@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Digital Shield – Operator Console{% endblock %}</title>
+  
+  <!-- SEO & Meta Tags -->
+  <meta name="description" content="Digital Shield Emergency Dispatch Console. Real-time protection dashboard and safety auditing.">
+  <meta name="author" content="Digital Shield B.E. Project Team">
+
+  <!-- CSS Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  
+  <!-- Favicon / Shield Icon -->
+  <link rel="icon" type="image/png" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff1744'><path d='M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-3zm0 6c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 7c2.33 0 7 1.17 7 3.5V20H5v-1.5c0-2.33 4.67-3.5 7-3.5z'/></svg>">
+  
+  {% block extra_head %}{% endblock %}
+  <style>
+    /* Custom layout styling for operator dashboard */
+    .nav-actions .alarm-control {
+      background: rgba(255, 23, 68, 0.15);
+      border: 1px solid var(--sos-red);
+      color: #ff6e7a;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .nav-actions .alarm-control.muted {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--text-muted);
+      color: var(--text-muted);
+    }
+    .badge-status-sent { background: rgba(255, 23, 68, 0.2); color: #ff6e7a; border: 1px solid rgba(255, 23, 68, 0.4); }
+    .badge-status-responding { background: rgba(255, 193, 7, 0.2); color: #ffd54f; border: 1px solid rgba(255, 193, 7, 0.4); }
+    .badge-status-dispatched { background: rgba(33, 150, 243, 0.2); color: var(--blue-light); border: 1px solid rgba(33, 150, 243, 0.4); }
+    .badge-status-resolved { background: rgba(0, 230, 118, 0.2); color: #00e676; border: 1px solid rgba(0, 230, 118, 0.4); }
+    .badge-status-false_alarm { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); border: 1px solid rgba(255, 255, 255, 0.1); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Operator Navigation Bar ────────────────────────────────────────────── -->
+  <nav class="navbar" id="main-nav" style="border-bottom: 2px solid var(--sos-red-glow);">
+    <div class="container">
+      <a href="{{ url_for('dashboard') }}" class="navbar-brand" id="brand-logo">
+        <div class="shield-icon" style="background: linear-gradient(135deg, var(--sos-red), var(--sos-red-dark)); box-shadow: 0 4px 15px var(--sos-red-glow);">🚨</div>
+        <span>Digital Shield Console</span>
+      </a>
+
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">☰</button>
+
+      <ul class="nav-links" id="nav-links">
+        {% if session.get('user_id') %}
+          <li><a href="{{ url_for('dashboard') }}">Dispatch Center</a></li>
+          <li><a href="{{ url_for('users') }}">User Directory</a></li>
+          <li><a href="{{ url_for('logs') }}">Audit Logs</a></li>
+        {% endif %}
+      </ul>
+
+      <div class="nav-actions">
+        <!-- Theme Toggle -->
+        <button class="theme-toggle" id="theme-btn" title="Toggle Theme"></button>
+        
+        {% if session.get('user_id') %}
+          <!-- Global Siren Control -->
+          <button class="alarm-control" id="global-alarm-btn" onclick="toggleMute()">
+            <span id="alarm-icon">🔊</span> <span id="alarm-text">Siren Enabled</span>
+          </button>
+          <a href="{{ url_for('logout') }}" class="btn btn-outline btn-sm" style="border-color: var(--sos-red); color: #ff6e7a;">Console Logout</a>
+        {% else %}
+          <a href="{{ url_for('login') }}" class="btn btn-primary btn-sm" style="background: linear-gradient(135deg, var(--sos-red), var(--sos-red-dark)); box-shadow: 0 4px 15px var(--sos-red-glow);">Operator Login</a>
+        {% endif %}
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Flash Message Notifications ────────────────────────────────────────── -->
+  <div class="container mt-2">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }}" data-auto-dismiss>
+            {% if category == 'success' %}✅{% elif category == 'danger' %}🚨{% elif category == 'warning' %}⚠️{% else %}ℹ️{% endif %}
+            <span>{{ message }}</span>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- ── Main Page Content ───────────────────────────────────────────────────── -->
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+  <footer>
+    <div class="container">
+      <p>© 2026 Digital Shield – Smart Dispatch Response Console. Unauthorized access is strictly audited.</p>
+    </div>
+  </footer>
+
+  <!-- ── JavaScript Utilities ───────────────────────────────────────────────── -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script>
+    // Audio siren mute/unmute settings
+    let isSirenMuted = localStorage.getItem('operator-siren-muted') === 'true';
+    
+    document.addEventListener('DOMContentLoaded', () => {
+      syncSirenUI();
+    });
+
+    function toggleMute() {
+      isSirenMuted = !isSirenMuted;
+      localStorage.setItem('operator-siren-muted', isSirenMuted);
+      syncSirenUI();
+      if (isSirenMuted && typeof stopEmergencySound === 'function') {
+        stopEmergencySound();
+      }
+    }
+
+    function syncSirenUI() {
+      const btn = document.getElementById('global-alarm-btn');
+      const icon = document.getElementById('alarm-icon');
+      const text = document.getElementById('alarm-text');
+      if (!btn) return;
+      if (isSirenMuted) {
+        btn.classList.add('muted');
+        icon.textContent = '🔇';
+        text.textContent = 'Siren Muted';
+      } else {
+        btn.classList.remove('muted');
+        icon.textContent = '🔊';
+        text.textContent = 'Siren Enabled';
+      }
+    }
+  </script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

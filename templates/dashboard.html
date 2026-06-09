@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard – Digital Shield{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page">
+  <!-- Header Area -->
+  <div class="d-flex justify-between align-center flex-wrap mb-3">
+    <div>
+      <h2 class="page-title">Safety Control Center</h2>
+      <p class="page-subtitle">Welcome back, <span class="text-blue fw-bold">{{ user.full_name }}</span>. Protection system is fully active.</p>
+    </div>
+    <div>
+      <span class="badge badge-blue">🛡️ System Secured</span>
+    </div>
+  </div>
+
+  <!-- Real-Time Location widget -->
+  <div class="location-bar">
+    <div class="location-dot"></div>
+    <div class="location-text">
+      <div class="loc-label">Active GPS Location</div>
+      <div class="loc-value" id="location-value">Locating system GPS...</div>
+      <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.2rem;">
+        Coordinates: <span id="location-coord" class="fw-bold">Acquiring...</span>
+      </div>
+    </div>
+    <button class="btn btn-outline btn-sm" onclick="LocationService.fetchAndDisplay()" style="padding: 0.4rem 0.8rem;">
+      🔄 Sync GPS
+    </button>
+  </div>
+
+  <!-- Map Display Panel -->
+  <div class="map-container" id="map-container">
+    <div class="map-placeholder" id="map-placeholder">
+      <p>📍 Acquiring Map Coordinates...</p>
+    </div>
+    <iframe id="map-frame" style="display: none;" src="" allowfullscreen></iframe>
+  </div>
+
+  <!-- SOS Buttons Area -->
+  <div class="sos-section">
+    <!-- SOS Women Emergency -->
+    <div class="sos-card women-card">
+      <h3 class="sos-card-title text-red">Women's Emergency SOS</h3>
+      <p class="sos-card-desc">Press this button if you face danger, harassment, or a life-threatening scenario. Your GPS coordinates and location address will be sent to the police, parents, and friends.</p>
+      
+      <div class="sos-btn-wrapper red">
+        <div class="sos-pulse-ring"></div>
+        <div class="sos-pulse-ring"></div>
+        <div class="sos-pulse-ring"></div>
+        <button class="sos-btn red-btn" id="women-sos-btn" aria-label="Trigger Women SOS">
+          <span class="sos-icon">🔴</span>
+          <span class="sos-label">SOS</span>
+        </button>
+      </div>
+
+      <!-- Loading / Progress bar simulator -->
+      <div class="sos-loading" id="women-sos-loader">
+        <span style="font-size: 0.8rem; color: var(--sos-red);">Broadcasting Alert signals...</span>
+        <div class="sos-progress">
+          <div class="sos-progress-bar red"></div>
+        </div>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
+        Will notify: <span class="text-red fw-bold">Police, Family, Friends</span>
+      </div>
+    </div>
+
+    <!-- SOS Pregnancy Emergency -->
+    <div class="sos-card preg-card">
+      <h3 class="sos-card-title text-green">Pregnancy Emergency SOS</h3>
+      <p class="sos-card-desc">Press this button if you require urgent pregnancy medical dispatch, labor assistance, or clinical care. This action pings the nearest hospital, dispatch doctor, and ambulance.</p>
+      
+      <div class="sos-btn-wrapper green">
+        <div class="sos-pulse-ring"></div>
+        <div class="sos-pulse-ring"></div>
+        <div class="sos-pulse-ring"></div>
+        <button class="sos-btn green-btn" id="preg-sos-btn" aria-label="Trigger Pregnancy SOS">
+          <span class="sos-icon">🟢</span>
+          <span class="sos-label">Medical</span>
+        </button>
+      </div>
+
+      <!-- Loading / Progress bar simulator -->
+      <div class="sos-loading" id="preg-sos-loader">
+        <span style="font-size: 0.8rem; color: var(--sos-green);">Paging Ambulance & Doctor...</span>
+        <div class="sos-progress">
+          <div class="sos-progress-bar green"></div>
+        </div>
+      </div>
+
+      <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 1rem;">
+        Will notify: <span class="text-green fw-bold">Doctor, Hospital, Ambulance, Family</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 2rem;">
+    <!-- Active Emergency Contacts List -->
+    <div class="card">
+      <div class="card-header d-flex justify-between align-center">
+        <span>🛡️ Emergency Contacts</span>
+        <a href="{{ url_for('contacts') }}" class="btn btn-outline btn-sm">Manage</a>
+      </div>
+      <div class="card-body">
+        {% if contacts %}
+          <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+            {% for contact in contacts %}
+              <div class="d-flex align-center justify-between" style="background: rgba(255,255,255,0.02); padding: 0.75rem 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-weight: 600; font-size: 0.95rem;">{{ contact.name }}</div>
+                  <div style="font-size: 0.8rem; color: var(--text-muted);">{{ contact.relation }} • {{ contact.phone }}</div>
+                </div>
+                <div>
+                  {% if contact.type == 'pregnancy' %}
+                    <span class="badge badge-green">Pregnancy</span>
+                  {% else %}
+                    <span class="badge badge-blue">Women</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-center text-muted">No emergency contacts configured yet. Please configure them immediately.</p>
+          <a href="{{ url_for('contacts') }}" class="btn btn-primary btn-block mt-3">Add Emergency Contacts</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Recent Alerts History panel -->
+    <div class="card">
+      <div class="card-header d-flex justify-between align-center">
+        <span>🕒 Recent Activity</span>
+        <a href="{{ url_for('history') }}" class="btn btn-outline btn-sm">View All</a>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        {% if alerts %}
+          <div class="table-wrapper" style="border: none;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Location Address</th>
+                  <th>Date & Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for alert in alerts %}
+                  <tr>
+                    <td>
+                      {% if alert.type == 'women' %}
+                        <span class="badge badge-red">Women SOS</span>
+                      {% else %}
+                        <span class="badge badge-green">Pregnancy</span>
+                      {% endif %}
+                    </td>
+                    <td title="{{ alert.address }}">
+                      {{ alert.address[:35] }}{% if alert.address|length > 35 %}...{% endif %}
+                    </td>
+                    <td style="font-size: 0.8rem;">
+                      {{ alert.created_at }}
+                    </td>
+                  </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        {% else %}
+          <div style="padding: 2rem; text-align: center;" class="text-muted">
+            No incident reports or medical SOS triggers logged.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Modal popup dialog overlay ─────────────────────────────────────────── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-icon" id="modal-icon">🚨</div>
+    <div class="modal-title" id="modal-title">Emergency Alert Transmitted</div>
+    <p class="modal-msg" id="modal-message">System has notified emergency authorities.</p>
+    
+    <div class="section-heading" style="font-size: 0.75rem; margin-bottom: 0.75rem;">
+      <span>Notified Responders</span>
+    </div>
+    <div class="modal-contacts" id="modal-contacts-list">
+      <!-- Dynamic list of notified contacts -->
+    </div>
+
+    <button class="btn btn-primary btn-block" id="modal-close-btn">Acknowledge & Safe</button>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Include Geolocation & SOS control scripts -->
+<script src="{{ url_for('static', filename='js/location.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

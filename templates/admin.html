@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Control Panel – Digital Shield{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page">
+  <div class="mb-3">
+    <h2 class="page-title">Platform Administration</h2>
+    <p class="page-subtitle">Platform-wide system metrics, user rosters, log analysis, and safety auditing.</p>
+  </div>
+
+  <!-- Admin Stats Grid -->
+  <div class="admin-stats">
+    <!-- Stat 1 -->
+    <div class="admin-stat">
+      <div class="admin-stat-icon blue">👥</div>
+      <div class="admin-stat-info">
+        <div class="stat-n">{{ stats.total_users }}</div>
+        <div class="stat-l">Registered Users</div>
+      </div>
+    </div>
+    <!-- Stat 2 -->
+    <div class="admin-stat">
+      <div class="admin-stat-icon red">🚨</div>
+      <div class="admin-stat-info">
+        <div class="stat-n">{{ stats.total_women_alerts }}</div>
+        <div class="stat-l">Women SOS Alerts</div>
+      </div>
+    </div>
+    <!-- Stat 3 -->
+    <div class="admin-stat">
+      <div class="admin-stat-icon green">🏥</div>
+      <div class="admin-stat-info">
+        <div class="stat-n">{{ stats.total_pregnancy_alerts }}</div>
+        <div class="stat-l">Pregnancy SOS Alerts</div>
+      </div>
+    </div>
+    <!-- Stat 4 -->
+    <div class="admin-stat">
+      <div class="admin-stat-icon yellow">📞</div>
+      <div class="admin-stat-info">
+        <div class="stat-n">{{ stats.total_contacts }}</div>
+        <div class="stat-l">Saved Contacts</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Users Roster Card -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <span>👥 Platform User Roster</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Full Name</th>
+              <th>Email</th>
+              <th>Mobile</th>
+              <th>Blood Group</th>
+              <th>Role</th>
+              <th>Registered At</th>
+              <th>Privileges</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for u in users %}
+              <tr>
+                <td>{{ u.id }}</td>
+                <td style="font-weight: 600;">{{ u.full_name }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.mobile }}</td>
+                <td>
+                  {% if u.blood_group %}
+                    <span class="badge badge-yellow">{{ u.blood_group }}</span>
+                  {% else %}
+                    <span class="text-muted">—</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if u.is_admin %}
+                    <span class="badge badge-red">Admin</span>
+                  {% else %}
+                    <span class="badge badge-blue">User</span>
+                  {% endif %}
+                </td>
+                <td style="font-size: 0.8rem;">{{ u.created_at }}</td>
+                <td>
+                  {% if not u.is_admin %}
+                    <button class="btn btn-outline btn-sm" onclick="promoteUser({{ u.id }})" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+                      Promote
+                    </button>
+                  {% else %}
+                    <span class="text-muted">Fully Authorized</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global SOS Alerts Card -->
+  <div class="card mb-4">
+    <div class="card-header">
+      <span>🚨 Global Safety Alert Dispatches</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      {% if alerts %}
+        <div class="table-wrapper">
+          <table>
+            <thead>
+              <tr>
+                <th>Dispatched By</th>
+                <th>Mobile</th>
+                <th>Alert Type</th>
+                <th>GPS Location</th>
+                <th>Location Address</th>
+                <th>Status</th>
+                <th>Dispatch Time</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for alert in alerts %}
+                <tr>
+                  <td style="font-weight: 600;">{{ alert.full_name }}</td>
+                  <td>{{ alert.mobile }}</td>
+                  <td>
+                    {% if alert.type == 'Women SOS' %}
+                      <span class="badge badge-red">🔴 Women SOS</span>
+                    {% else %}
+                      <span class="badge badge-green">🟢 Pregnancy</span>
+                    {% endif %}
+                  </td>
+                  <td style="font-family: monospace;">{{ alert.latitude }}, {{ alert.longitude }}</td>
+                  <td>{{ alert.address }}</td>
+                  <td>
+                    <span class="badge badge-blue">{{ alert.status }}</span>
+                  </td>
+                  <td style="font-size: 0.8rem;">{{ alert.created_at }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div style="padding: 3rem; text-align: center;" class="text-muted">
+          No dispatch alerts logged on the system.
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Audit Logs Card -->
+  <div class="card">
+    <div class="card-header">
+      <span>📋 System Audit logs</span>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Log ID</th>
+              <th>Triggered By</th>
+              <th>Action Event</th>
+              <th>Details</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for log in logs %}
+              <tr>
+                <td>#{{ log.id }}</td>
+                <td style="font-weight: 600;">
+                  {{ log.full_name or 'System/Anonymous' }}
+                </td>
+                <td>
+                  <span class="badge badge-yellow">{{ log.action }}</span>
+                </td>
+                <td>{{ log.details or '—' }}</td>
+                <td style="font-size: 0.8rem;">{{ log.created_at }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function promoteUser(userId) {
+  if (!confirm('Promote this user to administrator?')) return;
+  
+  try {
+    const res = await fetch(`/api/admin/make_admin/${userId}`, { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      showToast('User promoted to Admin role.', 'success');
+      setTimeout(() => window.location.reload(), 1200);
+    } else {
+      showToast('Promotion request failed.', 'danger');
+    }
+  } catch(err) {
+    showToast('Network error promoting user.', 'danger');
+  }
+}
+</script>
+{% endblock %}

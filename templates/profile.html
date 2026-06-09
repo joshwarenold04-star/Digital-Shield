@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}User Profile – Digital Shield{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page" style="max-width: 700px;">
+  <div class="mb-3">
+    <h2 class="page-title">User Profile Management</h2>
+    <p class="page-subtitle">Update your personal configuration details and safety identifiers.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span>⚙️ Profile Settings</span>
+    </div>
+    <div class="card-body">
+      <form action="{{ url_for('profile') }}" method="POST">
+        <div class="form-group">
+          <label class="form-label">Email Address (Read-only)</label>
+          <input type="email" class="form-control" value="{{ user.email }}" style="opacity: 0.6; cursor: not-allowed;" readonly>
+        </div>
+
+        <div class="form-group">
+          <label for="full_name" class="form-label">Full Name</label>
+          <input type="text" id="full_name" name="full_name" class="form-control" value="{{ user.full_name }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="mobile" class="form-label">Mobile Number</label>
+          <input type="tel" id="mobile" name="mobile" class="form-control" value="{{ user.mobile }}" required>
+        </div>
+
+        <div class="form-group">
+          <label for="blood_group" class="form-label">Blood Group</label>
+          <select id="blood_group" name="blood_group" class="form-control">
+            <option value="" {% if not user.blood_group %}selected{% endif %}>Select Group</option>
+            <option value="A+" {% if user.blood_group == 'A+' %}selected{% endif %}>A+</option>
+            <option value="A-" {% if user.blood_group == 'A-' %}selected{% endif %}>A-</option>
+            <option value="B+" {% if user.blood_group == 'B+' %}selected{% endif %}>B+</option>
+            <option value="B-" {% if user.blood_group == 'B-' %}selected{% endif %}>B-</option>
+            <option value="O+" {% if user.blood_group == 'O+' %}selected{% endif %}>O+</option>
+            <option value="O-" {% if user.blood_group == 'O-' %}selected{% endif %}>O-</option>
+            <option value="AB+" {% if user.blood_group == 'AB+' %}selected{% endif %}>AB+</option>
+            <option value="AB-" {% if user.blood_group == 'AB-' %}selected{% endif %}>AB-</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="address" class="form-label">Residential Address</label>
+          <textarea id="address" name="address" class="form-control" style="height: 100px; resize: vertical;">{{ user.address }}</textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block mt-3">Save Changes</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Emergency Contacts – Digital Shield{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page">
+  <div class="mb-3">
+    <h2 class="page-title">Manage Emergency Contacts</h2>
+    <p class="page-subtitle">Configure up to 3 safety contacts who will receive emergency coordinates.</p>
+  </div>
+
+  <div class="d-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+    <!-- Add Contact Form -->
+    <div class="card">
+      <div class="card-header">
+        <span>➕ Add Contact</span>
+      </div>
+      <div class="card-body">
+        <form action="{{ url_for('contacts') }}" method="POST">
+          <div class="form-group">
+            <label for="name" class="form-label">Contact Name *</label>
+            <input type="text" id="name" name="name" class="form-control" placeholder="e.g. John Doe" required>
+          </div>
+
+          <div class="form-group">
+            <label for="phone" class="form-label">Phone Number *</label>
+            <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. 9876543210" required>
+          </div>
+
+          <div class="form-group">
+            <label for="relation" class="form-label">Relationship</label>
+            <select id="relation" name="relation" class="form-control">
+              <option value="Parent">Parent</option>
+              <option value="Friend">Friend</option>
+              <option value="Spouse">Spouse</option>
+              <option value="Doctor">Doctor</option>
+              <option value="Relative">Relative</option>
+              <option value="Neighbour">Neighbour</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="type" class="form-label">Alert Category Mapping</label>
+            <select id="type" name="type" class="form-control">
+              <option value="women">Women Safety SOS (Red button)</option>
+              <option value="pregnancy">Pregnancy Help SOS (Green button)</option>
+            </select>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-block mt-3">Register Contact</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Active Contacts list -->
+    <div class="card">
+      <div class="card-header">
+        <span>👥 Active Safety Contacts</span>
+      </div>
+      <div class="card-body" style="padding: 0;">
+        {% if contacts %}
+          <div style="display: flex; flex-direction: column; padding: 1rem; gap: 0.75rem;">
+            {% for contact in contacts %}
+              <div class="d-flex align-center justify-between" style="background: rgba(255,255,255,0.02); padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-weight: 700; font-size: 1rem;">{{ contact.name }}</div>
+                  <div style="font-size: 0.85rem; color: var(--text-muted);">
+                    Relation: <span class="text-blue">{{ contact.relation }}</span> • Tel: {{ contact.phone }}
+                  </div>
+                  <div style="margin-top: 0.4rem;">
+                    {% if contact.type == 'pregnancy' %}
+                      <span class="badge badge-green">Pregnancy Assistance</span>
+                    {% else %}
+                      <span class="badge badge-blue">Women Safety</span>
+                    {% endif %}
+                  </div>
+                </div>
+                <div>
+                  <form action="{{ url_for('delete_contact', contact_id=contact.id) }}" method="POST" onsubmit="return confirm('Remove contact?');">
+                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.4rem 0.6rem;" aria-label="Remove contact">
+                      🗑️ Remove
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div style="padding: 3rem 1rem; text-align: center;" class="text-muted">
+            No active contacts configured.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
