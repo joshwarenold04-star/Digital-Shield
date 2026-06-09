@@ -123,7 +123,24 @@ document.addEventListener('DOMContentLoaded', () => {
 // Trigger SOS alerts directly from lock screen
 async function triggerLockscreenSOS(type) {
   // Play emergency beep alarm immediately
-  playEmergencySound(type);
+ function playEmergencySound(type = 'women') {
+  // Stop any existing alarm
+  stopEmergencySound();
+  // YouTube link for the emergency sound
+  const ytUrl = 'https://www.youtube.com/watch?v=bOjTNcqt-kM';
+  // Create an HTML5 audio element (will attempt to play the YouTube video audio)
+  const audio = new Audio(ytUrl);
+  audio.loop = true;
+  // Store reference for later stop
+  window.__emergencyAudio = audio;
+  // Attempt to play; browsers may require user interaction
+  const playPromise = audio.play();
+  if (playPromise !== undefined) {
+    playPromise.catch(err => {
+      console.warn('Emergency sound playback failed (likely autoplay restriction)', err);
+    });
+  }
+};
 
   showToast(`Initiating Lock Screen SOS (${type.toUpperCase()})...`, 'warning');
 

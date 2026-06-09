@@ -60,6 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
       link.classList.add('active');
     }
   });
+
+  // Inject hidden YouTube player container into the page
+  injectYouTubePlayer();
 });
 
 // ── Clock (live) ──────────────────────────────────────────────────────────
@@ -80,12 +83,8 @@ function startClock(timeId, dateId) {
 
 // ── Toast notification ─────────────────────────────────────────────────────
 function showToast(msg, type = 'info', duration = 4000) {
-  const colors = {
-    success: '#00e676', danger: '#ff6e7a',
-    warning: '#ffc107', info:   '#64b5f6'
-  };
+  const colors = { success: '#00e676', danger: '#ff6e7a', warning: '#ffc107', info: '#64b5f6' };
   const icons = { success: '✅', danger: '🚨', warning: '⚠️', info: 'ℹ️' };
-
   const toast = document.createElement('div');
   toast.style.cssText = `
     position:fixed; bottom:1.5rem; right:1.5rem; z-index:9999;
@@ -100,12 +99,10 @@ function showToast(msg, type = 'info', duration = 4000) {
   `;
   toast.innerHTML = `<span>${icons[type]}</span><span>${msg}</span>`;
   document.body.appendChild(toast);
-
   requestAnimationFrame(() => {
     toast.style.transform = 'translateY(0)';
     toast.style.opacity   = '1';
   });
-
   setTimeout(() => {
     toast.style.transform = 'translateY(80px)';
     toast.style.opacity   = '0';
@@ -117,138 +114,148 @@ function showToast(msg, type = 'info', duration = 4000) {
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   const d = new Date(dateStr);
-  return d.toLocaleString('en-IN', {
-    day: '2-digit', month: 'short', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', hour12: true
+  return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+}
+
+// ── YouTube IFrame Emergency Sound ────────────────────────────────────────
+let ytPlayer = null;
+let ytPlayerReady = false;
+// Video IDs for each SOS type
+const YT_VIDEO_IDS = {
+  women: 'bOjTNcqt-kM',            // Women emergency tone
+  pregnancy: 'bqiBG33CPts'          // Pregnancy emergency tone (updated per user request)
+};
+
+function injectYouTubePlayer() {
+  const container = document.createElement('div');
+  container.id = 'yt-emergency-player';
+  container.style.cssText = 'position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;';
+  document.body.appendChild(container);
+  if (!document.getElementById('yt-iframe-api-script')) {
+    const script = document.createElement('script');
+    script.id  = 'yt-iframe-api-script';
+    script.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(script);
+  }
+}
+
+function onYouTubeIframeAPIReady() {
+  ytPlayer = new YT.Player('yt-emergency-player', {
+    height: '1',
+    width: '1',
+    videoId: YT_VIDEO_IDS.women, // default – will be changed on demand
+    playerVars: {
+      autoplay: 0,
+      mute: 0,
+      controls: 0,
+      disablekb: 1,
+      modestbranding: 1,
+      rel: 0,
+      loop: 1,
+      playlist: YT_VIDEO_IDS.women
+    },
+    events: {
+      onReady: (event) => {
+        ytPlayerReady = true;
+        event.target.setVolume(100);
+      }
+    }
   });
 }
 
-// ── Web Audio Emergency Alarm ─────────────────────────────────────────────
-let activeAlarmSources = [];
+function playEmergencySound(type = 'women') {
+  if (!YT_VIDEO_IDS[type]) {
+    console.warn('No YouTube video defined for SOS type:', type);
+    playFallbackBeep(type);
+    return;
+  }
+  const videoId = YT_VIDEO_IDS[type];
+  if (ytPlayer && ytPlayerReady) {
+    // Load the correct video (if not already) and play from start
+    ytPlayer.loadVideoById({
+      videoId: videoId,
+      startSeconds: 0,
+      suggestedQuality: 'highres'
+    });
+    ytPlayer.setVolume(100);
+    ytPlayer.playVideo();
+  } else {
+    // Player not ready yet – fallback to beep
+    playFallbackBeep(type);
+  }
+}
+
+function stopEmergencySound() {
+  if (ytPlayer && ytPlayerReady) {
+    try { ytPlayer.stopVideo(); } catch(e) {}
+  }
+  stopFallbackBeep();
+}
+
+// ── Fallback Web Audio Beep (used if YouTube player is not ready) ─────────
 let audioCtx = null;
 let melodyTimeoutId = null;
-
-// Note frequency map for "Ennai Vittu Uyir Ponaalum" (Love Today)
-const NOTE_FREQS = {
-  'G4': 392.00,
-  'A#4': 466.16,
-  'C5': 523.25,
-  'D5': 587.33,
-  'D#5': 622.25
-};
-
-// Main melody notes & durations (in seconds)
+let activeAlarmSources = [];
+const NOTE_FREQS = { 'G4': 392.00, 'A#4': 466.16, 'C5': 523.25, 'D5': 587.33, 'D#5': 622.25 };
 const MELODY = [
-  { note: 'C5', dur: 0.35 },
-  { note: 'D5', dur: 0.35 },
-  { note: 'D#5', dur: 0.35 },
-  { note: 'D5', dur: 0.35 },
-  { note: 'C5', dur: 0.35 },
-  { note: 'D5', dur: 0.35 },
-  { note: 'A#4', dur: 0.35 },
-  { note: 'G4', dur: 0.35 },
-  { note: 'D5', dur: 0.70 },
-  
-  { note: null, dur: 0.15 }, // pause
-  
-  { note: 'C5', dur: 0.35 },
-  { note: 'D5', dur: 0.35 },
-  { note: 'D#5', dur: 0.35 },
-  { note: 'D5', dur: 0.35 },
-  { note: 'C5', dur: 0.35 },
-  { note: 'D5', dur: 0.35 },
-  { note: 'A#4', dur: 0.35 },
-  { note: 'G4', dur: 0.35 },
-  { note: 'D5', dur: 0.50 },
-  { note: 'C5', dur: 0.70 },
-  
-  { note: null, dur: 0.80 } // delay before repeating loop
+  { note: 'C5',  dur: 0.35 }, { note: 'D5',  dur: 0.35 },
+  { note: 'D#5', dur: 0.35 }, { note: 'D5',  dur: 0.35 },
+  { note: 'C5',  dur: 0.35 }, { note: 'D5',  dur: 0.35 },
+  { note: 'A#4', dur: 0.35 }, { note: 'G4',  dur: 0.35 },
+  { note: 'D5',  dur: 0.70 }, { note: null,  dur: 0.15 },
+  { note: 'C5',  dur: 0.35 }, { note: 'D5',  dur: 0.35 },
+  { note: 'D#5', dur: 0.35 }, { note: 'D5',  dur: 0.35 },
+  { note: 'C5',  dur: 0.35 }, { note: 'D5',  dur: 0.35 },
+  { note: 'A#4', dur: 0.35 }, { note: 'G4',  dur: 0.35 },
+  { note: 'D5',  dur: 0.50 }, { note: 'C5',  dur: 0.70 },
+  { note: null,  dur: 0.80 }
 ];
 
-function playEmergencySound(type = 'women') {
-  stopEmergencySound(); // Reset any playing audio loop first
-
+function playFallbackBeep(type = 'women') {
+  stopFallbackBeep();
   try {
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-    // Resume audioCtx – required by Chrome/Edge autoplay policy
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-
-    // Dynamics compressor prevents clipping & distortion at max volume
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     const compressor = audioCtx.createDynamicsCompressor();
     compressor.threshold.setValueAtTime(-10, audioCtx.currentTime);
-    compressor.knee.setValueAtTime(10, audioCtx.currentTime);
     compressor.ratio.setValueAtTime(12, audioCtx.currentTime);
-    compressor.attack.setValueAtTime(0, audioCtx.currentTime);
-    compressor.release.setValueAtTime(0.25, audioCtx.currentTime);
     compressor.connect(audioCtx.destination);
-
-    // Sawtooth = loud buzzy danger; Triangle = clean medical tone
-    const waveType   = (type === 'women') ? 'sawtooth' : 'triangle';
-    const gainLevel  = 0.9; // safe max — no clipping/distortion
-
+    const waveType  = (type === 'women') ? 'sawtooth' : 'triangle';
+    const gainLevel = 0.9;
     function playMelodyLoop() {
       if (!audioCtx || audioCtx.state === 'closed') return;
-
-      let startTime = audioCtx.currentTime + 0.01; // tiny offset avoids timing edge cases
-
+      let startTime = audioCtx.currentTime + 0.01;
       MELODY.forEach(step => {
         if (step.note && audioCtx) {
-          const freq   = NOTE_FREQS[step.note];
-          const osc    = audioCtx.createOscillator();
-          const gain   = audioCtx.createGain();
-
+          const freq = NOTE_FREQS[step.note];
+          const osc  = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
           osc.connect(gain);
           gain.connect(compressor);
-
           osc.type = waveType;
           osc.frequency.setValueAtTime(freq, startTime);
-
-          // Smooth attack/release envelope (no clicks or pops)
           const decayEnd = Math.max(startTime + 0.01, startTime + step.dur - 0.04);
-          gain.gain.setValueAtTime(0.001, startTime);                     // avoid click on start
-          gain.gain.linearRampToValueAtTime(gainLevel, startTime + 0.03); // attack 30ms
-          gain.gain.exponentialRampToValueAtTime(0.001, decayEnd);        // decay to silence
-
+          gain.gain.setValueAtTime(0.001, startTime);
+          gain.gain.linearRampToValueAtTime(gainLevel, startTime + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.001, decayEnd);
           osc.start(startTime);
           osc.stop(startTime + step.dur);
-
           activeAlarmSources.push(osc);
         }
         startTime += step.dur;
       });
-
-      // Calculate total loop duration and schedule next repeat
       const totalDuration = MELODY.reduce((acc, step) => acc + step.dur, 0);
       melodyTimeoutId = setTimeout(playMelodyLoop, (totalDuration - 0.05) * 1000);
     }
-
-    // Kick off infinite loop
     playMelodyLoop();
-
   } catch (err) {
     console.warn('Web Audio API error:', err);
   }
 }
 
-function stopEmergencySound() {
-  if (melodyTimeoutId) {
-    clearTimeout(melodyTimeoutId);
-    melodyTimeoutId = null;
-  }
-  // Stop all scheduled oscillators
-  activeAlarmSources.forEach(src => {
-    try { src.stop(); } catch(e) {}
-  });
+function stopFallbackBeep() {
+  if (melodyTimeoutId) { clearTimeout(melodyTimeoutId); melodyTimeoutId = null; }
+  activeAlarmSources.forEach(src => { try { src.stop(); } catch(e) {} });
   activeAlarmSources = [];
-  
-  if (audioCtx && audioCtx.state !== 'closed') {
-    try { audioCtx.close(); } catch(e) {}
-    audioCtx = null;
-  }
+  if (audioCtx && audioCtx.state !== 'closed') { try { audioCtx.close(); } catch(e) {} audioCtx = null; }
 }
-
-
-
