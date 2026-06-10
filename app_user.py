@@ -17,6 +17,7 @@ Description:
 """
 
 import json
+import os
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, jsonify, flash
@@ -28,7 +29,12 @@ import database as db
 # ──────────────────────────────────────────────────────────────────────────────
 # App Configuration
 # ──────────────────────────────────────────────────────────────────────────────
-app = Flask(__name__)
+_dir = os.path.dirname(os.path.abspath(__file__))
+app = Flask(
+    __name__,
+    static_folder=os.path.join(_dir, "static"),
+    template_folder=os.path.join(_dir, "templates"),
+)
 app.secret_key = "digital_shield_user_secret_key_2024_secure"
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable static file caching in dev
 CORS(app)
