@@ -12,14 +12,16 @@ Tables    : users, emergency_contacts, emergency_alerts,
 """
 
 import os
+from dotenv import load_dotenv
 from supabase import create_client, Client
+
+load_dotenv()
 
 # ──────────────────────────────────────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────────────────────────────────────
-# Hardcode for now as provided by user, or use env vars
-SUPABASE_URL = os.environ.get("SUPABASE_URL", "https://oraxhvfudvqvnemydvpf.supabase.co")
-SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "sb_publishable_DYyvPuZG-VUSLs6B1_UANQ_PbMG8Xxi")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 

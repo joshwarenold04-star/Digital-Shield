@@ -19,12 +19,15 @@ Description:
 import json
 import os
 import traceback
+from dotenv import load_dotenv
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, jsonify, flash
 )
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
+
+load_dotenv()
 
 try:
     import database as db
@@ -42,7 +45,7 @@ app = Flask(
     static_folder=os.path.join(_dir, "static"),
     template_folder=os.path.join(_dir, "templates"),
 )
-app.secret_key = "digital_shield_user_secret_key_2024_secure"
+app.secret_key = os.environ.get("USER_SECRET_KEY", "digital_shield_user_secret_key_2024_secure")
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable static file caching in dev
 CORS(app)
 
