@@ -127,7 +127,7 @@ async function triggerLockscreenSOS(type) {
   // Stop any existing alarm
   stopEmergencySound();
   // YouTube link for the emergency sound
-  const ytUrl = 'https://www.youtube.com/watch?v=bOjTNcqt-kM';
+  const ytUrl = 'https://www.youtube.com/watch?v=85EocVoPdb4';
   // Create an HTML5 audio element (will attempt to play the YouTube video audio)
   const audio = new Audio(ytUrl);
   audio.loop = true;

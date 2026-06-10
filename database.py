@@ -22,8 +22,11 @@ DATABASE = os.path.join(os.path.dirname(__file__), "women_safety.db")
 
 def get_db():
     """Open a new database connection for the current request context."""
-    conn = sqlite3.connect(DATABASE)
+    conn = sqlite3.connect(DATABASE, timeout=20)
     conn.row_factory = sqlite3.Row  # Return rows as dict-like objects
+    # Enable WAL mode for better concurrency and fewer 'database locked' errors
+    conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA synchronous = NORMAL")
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
@@ -118,6 +121,14 @@ def get_user_by_email(email: str):
     user = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     conn.close()
     return user
+
+
+def get_user_by_mobile(mobile: str):
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE mobile = ?", (mobile,)).fetchone()
+    conn.close()
+    return user
+
 
 
 def get_user_by_id(user_id: int):

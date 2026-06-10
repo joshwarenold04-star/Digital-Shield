@@ -122,8 +122,8 @@ let ytPlayer = null;
 let ytPlayerReady = false;
 // Video IDs for each SOS type
 const YT_VIDEO_IDS = {
-  women: 'bOjTNcqt-kM',            // Women emergency tone
-  pregnancy: 'bqiBG33CPts'          // Pregnancy emergency tone (updated per user request)
+  women: '85EocVoPdb4',            // Updated siren sound
+  pregnancy: '85EocVoPdb4'          // Updated siren sound for pregnancy
 };
 
 function injectYouTubePlayer() {

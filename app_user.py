@@ -105,6 +105,11 @@ def register():
             flash("Email already registered. Please login.", "warning")
             return redirect(url_for("login"))
 
+        if db.get_user_by_mobile(mobile):
+            flash("Mobile number already registered. Please use a different number or login.", "warning")
+            return redirect(url_for("register"))
+
+
         # Create user
         pw_hash = generate_password_hash(password)
         db.create_user(full_name, mobile, email, pw_hash, address, blood_group)
@@ -132,17 +137,22 @@ def register():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    """User login – validates credentials and starts session."""
+    """User login – validates credentials (email or mobile) and starts session."""
     if request.method == "POST":
-        email    = request.form.get("email", "").strip().lower()
-        password = request.form.get("password", "")
+        email_or_mobile = request.form.get("email", "").strip()
+        password        = request.form.get("password", "")
 
-        user = db.get_user_by_email(email)
+        # Try to find user by email first
+        user = db.get_user_by_email(email_or_mobile.lower())
+        if not user:
+            # Try to find user by mobile number
+            user = db.get_user_by_mobile(email_or_mobile)
+
         if user and check_password_hash(user["password_hash"], password):
             session["user_id"]   = user["id"]
             session["user_name"] = user["full_name"]
             session["is_admin"]  = bool(user["is_admin"])
-            db.log_action(user["id"], "LOGIN", f"User logged in: {email}")
+            db.log_action(user["id"], "LOGIN", f"User logged in: {user['email']}")
             flash(f"Welcome back, {user['full_name']}! 🛡️", "success")
             return redirect(url_for("dashboard"))
         else:
@@ -184,10 +194,17 @@ def profile():
         mobile      = request.form.get("mobile", "").strip()
         address     = request.form.get("address", "").strip()
         blood_group = request.form.get("blood_group", "").strip()
+        # Check if mobile is already taken by another user
+        existing_user = db.get_user_by_mobile(mobile)
+        if existing_user and existing_user["id"] != session["user_id"]:
+            flash("Mobile number is already registered by another user.", "warning")
+            return redirect(url_for("profile"))
+
         db.update_user(session["user_id"], full_name, mobile, address, blood_group)
         session["user_name"] = full_name
         flash("Profile updated successfully.", "success")
         return redirect(url_for("profile"))
+
     return render_template("profile.html", user=user)
 
 
