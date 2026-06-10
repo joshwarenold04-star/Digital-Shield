@@ -184,7 +184,11 @@ def login():
 @login_required
 def logout():
     """End user session and redirect to landing page."""
-    db.log_action(session.get("user_id"), "LOGOUT", "")
+    if "user_id" in session:
+        try:
+            db.log_action(session["user_id"], "LOGOUT", "User logged out")
+        except Exception as e:
+            print(f"Failed to log logout action: {e}")
     session.clear()
     flash("You have been logged out safely.", "info")
     return redirect(url_for("index"))
