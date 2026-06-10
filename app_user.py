@@ -18,13 +18,20 @@ Description:
 
 import json
 import os
+import traceback
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, jsonify, flash
 )
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
-import database as db
+
+try:
+    import database as db
+    DB_INIT_ERROR = None
+except Exception as e:
+    db = None
+    DB_INIT_ERROR = traceback.format_exc()
 
 # ──────────────────────────────────────────────────────────────────────────────
 # App Configuration
@@ -40,7 +47,8 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable static file caching in de
 CORS(app)
 
 # Initialize database on startup
-db.init_db()
+if db:
+    db.init_db()
 
 
 # ── Force no-cache on every response (dev only) ───────────────────────────────
@@ -76,6 +84,8 @@ def login_required(f):
 @app.route("/")
 def index():
     """Landing page – shown to all visitors."""
+    if DB_INIT_ERROR:
+        return f"<pre>DATABASE INIT ERROR:\n{DB_INIT_ERROR}</pre>", 500
     if "user_id" in session:
         return redirect(url_for("dashboard"))
     return render_template("index.html")

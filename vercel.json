@@ -5,7 +5,7 @@
       "src": "app_user.py",
       "use": "@vercel/python",
       "config": {
-        "includeFiles": "{static,templates}/**"
+        "includeFiles": "{static,templates}/**, *.py"
       }
     }
   ],
