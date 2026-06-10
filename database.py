@@ -17,7 +17,11 @@ import os
 # ──────────────────────────────────────────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────────────────────────────────────────
-DATABASE = os.path.join(os.path.dirname(__file__), "women_safety.db")
+# Vercel serverless functions have a read-only filesystem except /tmp
+if os.environ.get("VERCEL"):
+    DATABASE = "/tmp/women_safety.db"
+else:
+    DATABASE = os.path.join(os.path.dirname(__file__), "women_safety.db")
 
 
 def get_db():
