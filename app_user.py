@@ -81,6 +81,20 @@ def login_required(f):
     return decorated
 
 
+def admin_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+        user = db.get_user_by_id(session["user_id"])
+        if not user or not user.get("is_admin"):
+            session.clear()
+            flash("Operator/Admin access required.", "danger")
+            return redirect(url_for("login"))
+        return f(*args, **kwargs)
+    return decorated
+
+
 # ──────────────────────────────────────────────────────────────────────────────
 # Public Routes
 # ──────────────────────────────────────────────────────────────────────────────
@@ -171,9 +185,15 @@ def login():
             session["user_id"]   = user["id"]
             session["user_name"] = user["full_name"]
             session["is_admin"]  = bool(user["is_admin"])
-            db.log_action(user["id"], "LOGIN", f"User logged in: {user['email']}")
-            flash(f"Welcome back, {user['full_name']}! 🛡️", "success")
-            return redirect(url_for("dashboard"))
+            
+            if session["is_admin"]:
+                db.log_action(user["id"], "ADMIN_LOGIN", f"Operator console access: {user['email']}")
+                flash(f"Console Access Granted: {user['full_name']} 🛡️", "success")
+                return redirect(url_for("admin_dashboard"))
+            else:
+                db.log_action(user["id"], "LOGIN", f"User logged in: {user['email']}")
+                flash(f"Welcome back, {user['full_name']}! 🛡️", "success")
+                return redirect(url_for("dashboard"))
         else:
             flash("Invalid email or password.", "danger")
 
@@ -186,7 +206,10 @@ def logout():
     """End user session and redirect to landing page."""
     if "user_id" in session:
         try:
-            db.log_action(session["user_id"], "LOGOUT", "User logged out")
+            if session.get("is_admin"):
+                db.log_action(session["user_id"], "ADMIN_LOGOUT", "Operator logged out")
+            else:
+                db.log_action(session["user_id"], "LOGOUT", "User logged out")
         except Exception as e:
             print(f"Failed to log logout action: {e}")
     session.clear()
@@ -348,11 +371,94 @@ def api_get_history():
 
 
 # ──────────────────────────────────────────────────────────────────────────────
+# Admin & Operator Protected Pages & APIs
+# ──────────────────────────────────────────────────────────────────────────────
+@app.route("/admin/dashboard")
+@admin_required
+def admin_dashboard():
+    """Main emergency dispatch feed console."""
+    stats = db.get_stats()
+    return render_template("operator_dashboard.html", stats=stats)
+
+
+@app.route("/admin/users")
+@admin_required
+def admin_users():
+    """Platform user rosters and console promotion page."""
+    all_users = db.get_all_users()
+    return render_template("operator_users.html", users=all_users)
+
+
+@app.route("/admin/logs")
+@admin_required
+def admin_logs():
+    """System activity logs audit page."""
+    audit_logs = db.get_admin_logs(limit=100)
+    return render_template("operator_logs.html", logs=audit_logs)
+
+
+@app.route("/api/operator/alerts", methods=["GET"])
+@admin_required
+def api_get_alerts():
+    """GET /api/operator/alerts - Fetch all platform alerts."""
+    return jsonify(db.get_all_alerts())
+
+
+@app.route("/api/operator/contacts/<int:user_id>", methods=["GET"])
+@admin_required
+def api_get_user_contacts(user_id):
+    """GET /api/operator/contacts/<user_id> - Fetch specific user's emergency contacts."""
+    contacts = db.get_contacts(user_id)
+    return jsonify([dict(c) for c in contacts])
+
+
+@app.route("/api/operator/change_status/<alert_type>/<int:alert_id>", methods=["POST"])
+@admin_required
+def api_change_status(alert_type, alert_id):
+    """
+    POST /api/operator/change_status/<alert_type>/<alert_id>
+    """
+    data = request.get_json(silent=True) or {}
+    status = data.get("status")
+    
+    valid_statuses = ["sent", "responding", "dispatched", "resolved", "false_alarm"]
+    if status not in valid_statuses:
+        return jsonify({"success": False, "message": "Invalid status value"}), 400
+        
+    db.update_alert_status(alert_type, alert_id, status)
+    db.log_action(session["user_id"], "UPDATE_STATUS", f"Alert {alert_id} ({alert_type}) set to {status}")
+    return jsonify({"success": True})
+
+
+@app.route("/api/admin/stats", methods=["GET"])
+@admin_required
+def api_admin_stats():
+    """GET /api/admin/stats - Return live system metrics."""
+    return jsonify(db.get_stats())
+
+
+@app.route("/api/admin/make_admin/<int:user_id>", methods=["POST"])
+@admin_required
+def make_admin(user_id):
+    """Promote a registered user to admin/operator role."""
+    # Since we use Supabase now, we should update using Supabase client
+    db.supabase.table("users").update({"is_admin": True}).eq("id", user_id).execute()
+    db.log_action(session["user_id"], "MAKE_ADMIN", f"Promoted user ID {user_id} to Console Operator")
+    return jsonify({"success": True})
+
+
+# ──────────────────────────────────────────────────────────────────────────────
 # App Entry Point
 # ──────────────────────────────────────────────────────────────────────────────
 if __name__ == "__main__":
+    # Local development server
     print("=" * 60)
-    print("  Digital Shield - User Safety System (Port 5000)")
+    print("  Digital Shield - Unified System (Port 5000)")
     print("  Server running at: http://127.0.0.1:5000")
     print("=" * 60)
     app.run(debug=True, host="0.0.0.0", port=5000)
+else:
+    # Vercel serverless entry point
+    def handler(event, context):
+        """Return the Flask WSGI app for Vercel deployments."""
+        return app
