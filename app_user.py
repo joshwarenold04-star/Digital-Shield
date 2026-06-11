@@ -183,27 +183,44 @@ def login():
         email_or_mobile = request.form.get("email", "").strip()
         password        = request.form.get("password", "")
 
-        # Try to find user by email first
-        user = db.get_user_by_email(email_or_mobile.lower())
-        if not user:
-            # Try to find user by mobile number
-            user = db.get_user_by_mobile(email_or_mobile)
+        try:
+            # Try to find user by email first
+            user = db.get_user_by_email(email_or_mobile.lower())
+            if not user:
+                # Try to find user by mobile number
+                user = db.get_user_by_mobile(email_or_mobile)
 
-        if user and check_password_hash(user["password_hash"], password):
-            session["user_id"]   = user["id"]
-            session["user_name"] = user["full_name"]
-            session["is_admin"]  = bool(user["is_admin"])
-            
-            if session["is_admin"]:
-                db.log_action(user["id"], "ADMIN_LOGIN", f"Operator console access: {user['email']}")
-                flash(f"Console Access Granted: {user['full_name']} 🛡️", "success")
-                return redirect(url_for("admin_dashboard"))
+            if not user:
+                print(f"[LOGIN FAIL] No user found for: {email_or_mobile}")
+                flash("Invalid email or password.", "danger")
+                return render_template("login.html")
+
+            # Check password
+            pw_hash = user.get("password_hash", "")
+            if not pw_hash:
+                print(f"[LOGIN FAIL] Empty password hash for user: {email_or_mobile}")
+                flash("Invalid email or password.", "danger")
+                return render_template("login.html")
+
+            if check_password_hash(pw_hash, password):
+                session["user_id"]   = user["id"]
+                session["user_name"] = user["full_name"]
+                session["is_admin"]  = bool(user.get("is_admin", False))
+                
+                if session["is_admin"]:
+                    db.log_action(user["id"], "ADMIN_LOGIN", f"Operator console access: {user['email']}")
+                    flash(f"Console Access Granted: {user['full_name']} 🛡️", "success")
+                    return redirect(url_for("admin_dashboard"))
+                else:
+                    db.log_action(user["id"], "LOGIN", f"User logged in: {user['email']}")
+                    flash(f"Welcome back, {user['full_name']}! 🛡️", "success")
+                    return redirect(url_for("dashboard"))
             else:
-                db.log_action(user["id"], "LOGIN", f"User logged in: {user['email']}")
-                flash(f"Welcome back, {user['full_name']}! 🛡️", "success")
-                return redirect(url_for("dashboard"))
-        else:
-            flash("Invalid email or password.", "danger")
+                print(f"[LOGIN FAIL] Wrong password for: {email_or_mobile}")
+                flash("Invalid email or password.", "danger")
+        except Exception as e:
+            print(f"[LOGIN ERROR] {type(e).__name__}: {e}")
+            flash("Login failed due to a server error. Please try again.", "danger")
 
     return render_template("login.html")
 
@@ -386,7 +403,7 @@ def api_get_history():
 def admin_dashboard():
     """Main emergency dispatch feed console."""
     stats = db.get_stats()
-    return render_template("operator_dashboard.html", stats=stats)
+    return render_template("admin.html", stats=stats)
 
 
 @app.route("/admin/users")

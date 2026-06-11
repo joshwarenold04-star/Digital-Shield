@@ -134,25 +134,25 @@ def logout():
 # Protected Console Pages
 # ──────────────────────────────────────────────────────────────────────────────
 @app.route("/")
-@app.route("/dashboard")
+@app.route("/admin/dashboard")
 @admin_required
-def dashboard():
+def admin_dashboard():
     """Main emergency dispatch feed console."""
     stats = db.get_stats()
-    return render_template("operator_dashboard.html", stats=stats)
+    return render_template("admin.html", stats=stats)
 
 
-@app.route("/users")
+@app.route("/admin/users")
 @admin_required
-def users():
+def admin_users():
     """Platform user rosters and console promotion page."""
     all_users = db.get_all_users()
     return render_template("operator_users.html", users=all_users)
 
 
-@app.route("/logs")
+@app.route("/admin/logs")
 @admin_required
-def logs():
+def admin_logs():
     """System activity logs audit page."""
     audit_logs = db.get_admin_logs(limit=100)
     return render_template("operator_logs.html", logs=audit_logs)
@@ -206,10 +206,7 @@ def api_admin_stats():
 @admin_required
 def make_admin(user_id):
     """Promote a registered user to admin/operator role."""
-    conn = db.get_db()
-    conn.execute("UPDATE users SET is_admin=1 WHERE id=?", (user_id,))
-    conn.commit()
-    conn.close()
+    db.supabase.table("users").update({"is_admin": True}).eq("id", user_id).execute()
     db.log_action(session["user_id"], "MAKE_ADMIN", f"Promoted user ID {user_id} to Console Operator")
     return jsonify({"success": True})
 

@@ -58,9 +58,9 @@
 
       <ul class="nav-links" id="nav-links">
         {% if session.get('user_id') %}
-          <li><a href="{{ url_for('dashboard') }}">Dispatch Center</a></li>
-          <li><a href="{{ url_for('users') }}">User Directory</a></li>
-          <li><a href="{{ url_for('logs') }}">Audit Logs</a></li>
+          <li><a href="{{ url_for('admin_dashboard') }}">Dispatch Center</a></li>
+          <li><a href="{{ url_for('admin_users') }}">User Directory</a></li>
+          <li><a href="{{ url_for('admin_logs') }}">Audit Logs</a></li>
         {% endif %}
       </ul>
 
