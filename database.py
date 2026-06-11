@@ -111,14 +111,20 @@ def save_pregnancy_alert(user_id, latitude, longitude, address, notified):
 
 def get_user_alerts(user_id: int):
     """Return combined women + pregnancy alerts for a user, newest first."""
-    w_res = supabase.table("emergency_alerts").select("id, latitude, longitude, address, message, status, created_at").eq("user_id", user_id).execute()
-    p_res = supabase.table("pregnancy_alerts").select("id, latitude, longitude, address, message, status, created_at").eq("user_id", user_id).execute()
+    try:
+        w_res = supabase.table("emergency_alerts").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+    except Exception:
+        w_res = type('obj', (object,), {'data': []})()
+    try:
+        p_res = supabase.table("pregnancy_alerts").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
+    except Exception:
+        p_res = type('obj', (object,), {'data': []})()
     
     women = [{"type": "women", **r} for r in w_res.data]
     preg = [{"type": "pregnancy", **r} for r in p_res.data]
     
     all_alerts = women + preg
-    all_alerts.sort(key=lambda x: x["created_at"], reverse=True)
+    all_alerts.sort(key=lambda x: x.get("created_at", ""), reverse=True)
     return all_alerts
 
 def get_all_alerts():

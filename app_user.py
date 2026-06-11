@@ -54,6 +54,14 @@ if db:
     db.init_db()
 
 
+# ── Global error handler (shows real traceback on Vercel) ─────────────────────
+@app.errorhandler(500)
+def internal_error(e):
+    """Return detailed error info instead of generic 500 page."""
+    tb = traceback.format_exc()
+    return f"<h1>500 – Internal Server Error</h1><pre>{tb}</pre><p>{e}</p>", 500
+
+
 # ── Force no-cache on every response (dev only) ───────────────────────────────
 @app.after_request
 def add_no_cache_headers(response):

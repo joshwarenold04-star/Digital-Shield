@@ -38,7 +38,7 @@
           <li><a href="{{ url_for('history') }}">Alert History</a></li>
           <li><a href="{{ url_for('profile') }}">Profile</a></li>
           {% if session.get('is_admin') %}
-            <li><a href="http://127.0.0.1:5001/" target="_blank">Operator Panel</a></li>
+            <li><a href="{{ url_for('admin_dashboard') }}">Operator Panel</a></li>
           {% endif %}
         {% endif %}
         <li><a href="{{ url_for('lockscreen') }}">Lock Screen Simulation</a></li>
